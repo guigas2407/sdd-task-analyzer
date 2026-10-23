@@ -5,7 +5,7 @@
 | Autor | Guilherme Meyer Soares |
 | Curso | Análise e Desenvolvimento de Sistemas — Turma A |
 | Disciplina | Bootcamp III |
-| Versão | v1.1 (Contrato Executável — Fase 2) |
+| Versão | v1.2 (Contrato Executável — Fase 3) |
 
 ## Histórico de versões
 
@@ -13,6 +13,7 @@
 | --- | --- | --- |
 | v1.0 | Fase 1 | Contrato original (`TaskAnalyzer.calcular_metricas`, `ValueError`). |
 | v1.1 | Fase 2 | Alterações autorizadas pelo enunciado da Fase 2: função `analyze_tasks`, exceção `TaskValidationError` (subclasse de `ValueError`) e campos de saída `total_tarefas`, `total_concluidas`, `total_pendentes`. Esclarecimentos da seção 3.4. A assinatura da Fase 1 foi mantida como fachada. |
+| v1.2 | Fase 3 | Sem mudança no contrato de negócio. Adicionados a infraestrutura (seção 7), o SDD original em `specs/system_design_document.pdf` e a matriz de rastreabilidade em `specs/requirements.yaml`. |
 
 ## 1. Propósito
 
@@ -137,5 +138,17 @@ mensagem da regra 2 e registrar `logging.error`, sem crash não tratado.
 
 ## 6. Versionamento
 
-Git Flow simplificado: `main` guarda apenas código homologado; cada entrega
-nasce em `feature/<nome>` e entra em `main` via Pull Request revisado.
+Git Flow simplificado: `main` guarda apenas código homologado; `develop`
+integra as funcionalidades; cada entrega nasce em `feature/<nome>`, entra em
+`develop` via Pull Request revisado e depois em `main`.
+
+## 7. Infraestrutura (Fase 3)
+
+| Item | Arquivo | Regra |
+| --- | --- | --- |
+| Integração contínua | `.github/workflows/ci.yml` | Push e Pull Request em `main` e `develop`; `ubuntu-latest`, Python 3.11; `pip install -r requirements.txt`; `pytest tests/test_harness.py -v`. Um teste falho bloqueia o merge. |
+| Container | `Dockerfile` | Base `python:3.11-slim`, usuário sem privilégios, `pytest` como comando principal (`CMD`). |
+| Orquestração | `docker-compose.yml` | Serviço `tests`; execução com `docker compose run --rm tests`. |
+
+Critério de aceite da Fase 3: 100% dos testes aprovados no CI (build verde) e
+dentro do container.

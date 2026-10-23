@@ -1,7 +1,8 @@
 # sdd-task-analyzer
 
+[![CI](https://github.com/guigas2407/sdd-task-analyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/guigas2407/sdd-task-analyzer/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
-![Testes](https://img.shields.io/badge/pytest-33%20passed-brightgreen)
+![Docker](https://img.shields.io/badge/docker-python%3A3.11--slim-2496ED)
 
 Módulo **TaskAnalyzer**, desenvolvido com Spec-Driven Development (SDD) e
 geração de código assistida por IA, na disciplina Bootcamp III.
@@ -13,26 +14,52 @@ de atraso e métricas por prioridade. Todo o processamento ocorre em memória.
 
 | Item | Status |
 | --- | --- |
-| Test Harness (`pytest`) | 33 testes, 100% aprovados (execução local) |
-| CI/CD (GitHub Actions) | Previsto para a Fase 3 |
+| Test Harness (`pytest`) | 33 testes, 100% aprovados |
+| CI/CD (GitHub Actions) | A cada push e Pull Request em `main` e `develop` |
+| Docker | Testes executados em container `python:3.11-slim` |
 
 ## Estrutura
 
 ```
 sdd-task-analyzer/
-├── README.md                  # Este arquivo
-├── CONTEXT_RULES.md           # Regras de governança para agentes de IA
-├── .gitignore
-├── requirements.txt           # Dependências autorizadas (pytest)
+├── .github/
+│   └── workflows/
+│       └── ci.yml                 # Pipeline de CI (GitHub Actions)
+├── Dockerfile                     # Imagem python:3.11-slim que roda o pytest
+├── docker-compose.yml             # Orquestração: docker compose run --rm tests
+├── .dockerignore
+├── CONTEXT_RULES.md               # Regras de governança para agentes de IA
 ├── specs/
-│   └── task_analyzer_spec.md  # Contrato SDD (fonte da verdade)
+│   ├── system_design_document.pdf # SDD original (Fase 1)
+│   ├── requirements.yaml          # Requisitos + rastreabilidade para os testes
+│   └── task_analyzer_spec.md      # Contrato SDD v1.2 (fonte da verdade)
 ├── tests/
-│   └── test_harness.py        # Test Harness com pytest
-└── src/
-    └── task_analyzer.py       # Código gerado via IA e homologado
+│   └── test_harness.py            # Test Harness com pytest
+├── src/
+│   └── task_analyzer.py           # Código gerado via IA e homologado
+├── requirements.txt               # Dependências autorizadas (pytest)
+├── .gitignore
+└── README.md
 ```
 
 ## Como executar
+
+### Com Docker (recomendado)
+
+Não exige Python instalado, apenas o Docker.
+
+```bash
+docker build -t sdd-task-analyzer .
+docker run --rm sdd-task-analyzer
+```
+
+Ou, com o Docker Compose, em um único comando:
+
+```bash
+docker compose run --rm tests
+```
+
+### Localmente
 
 Requer Python 3.11 ou superior.
 
@@ -40,8 +67,10 @@ Requer Python 3.11 ou superior.
 python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-pytest -v
+pytest tests/test_harness.py -v
 ```
+
+Saída esperada nos dois casos: `33 passed`.
 
 ## Exemplo de uso
 
@@ -89,21 +118,25 @@ logging.basicConfig(
 Datas com conclusão anterior à criação disparam `TaskValidationError`
 (subclasse de `ValueError`). Listas sem tarefas concluídas retornam zeros e
 um `logging.warning`. Detalhes em
-[`specs/task_analyzer_spec.md`](specs/task_analyzer_spec.md).
+[`specs/task_analyzer_spec.md`](specs/task_analyzer_spec.md); a ligação entre
+cada requisito e seus testes está em
+[`specs/requirements.yaml`](specs/requirements.yaml).
 
 ## Governança de IA
 
 Todo prompt enviado ao assistente de IA começa com
 [`CONTEXT_RULES.md`](CONTEXT_RULES.md) e a especificação. O código só entra
-em `main` depois de passar no Test Harness e na revisão humana registrada no
-Pull Request.
+em `main` depois de passar no Test Harness, no pipeline de CI e na revisão
+humana registrada no Pull Request.
 
 ## Fluxo Git
 
 - `main`: código estável e homologado.
+- `develop`: integração das funcionalidades antes da `main`.
 - `feature/sdd-specification`: especificação e regras de contexto.
 - `feature/test-harness`: suíte de testes.
 - `feature/task-analyzer-impl`: implementação gerada via IA.
+- `feature/ci-docker`: pipeline de CI e containerização (Fase 3).
 
 ## Autor
 
