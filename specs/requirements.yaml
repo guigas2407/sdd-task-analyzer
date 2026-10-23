@@ -1,0 +1,138 @@
+# Requisitos do TaskAnalyzer em formato estruturado.
+# Fonte da verdade em texto: specs/task_analyzer_spec.md (v1.2).
+# Cada requisito aponta para os testes de tests/test_harness.py que o
+# comprovam, formando a matriz de rastreabilidade usada na homologação.
+
+projeto:
+  nome: sdd-task-analyzer
+  modulo: src/task_analyzer.py
+  versao_spec: "1.2"
+  autor: Guilherme Meyer Soares
+  disciplina: Bootcamp III
+
+interface_publica:
+  - simbolo: analyze_tasks(tarefas)
+    tipo: funcao
+    retorno: ResultadoAnalise (dict)
+  - simbolo: TaskValidationError
+    tipo: excecao
+    herda_de: ValueError
+  - simbolo: TaskAnalyzer.calcular_metricas(tarefas)
+    tipo: metodo_estatico
+    observacao: fachada da Fase 1, delega para analyze_tasks
+
+entrada:
+  - campo: id
+    tipo: str
+    obrigatorio: true
+    restricao: nao vazio e unico na lista
+  - campo: titulo
+    tipo: str
+    obrigatorio: true
+    restricao: minimo de 3 caracteres, ignorando espacos
+  - campo: prioridade
+    tipo: enum
+    obrigatorio: true
+    valores: [BAIXA, MEDIA, ALTA]
+  - campo: data_criacao
+    tipo: datetime ou ISO 8601
+    obrigatorio: true
+  - campo: data_prazo
+    tipo: datetime ou ISO 8601
+    obrigatorio: true
+  - campo: data_conclusao
+    tipo: datetime, ISO 8601 ou null
+    obrigatorio: false
+  - campo: status
+    tipo: enum
+    obrigatorio: true
+    valores: [PENDENTE, CONCLUIDA, CANCELADA]
+
+saida:
+  - total_tarefas
+  - total_concluidas
+  - total_pendentes
+  - total_tarefas_analisadas
+  - tempo_medio_conclusao_horas
+  - taxa_atraso_percentual
+  - metricas_por_prioridade
+
+requisitos_funcionais:
+  - id: RF-01
+    descricao: Calcular totais, tempo medio de conclusao (horas) e taxa de atraso (%)
+    testes:
+      - test_cenario_1_totais
+      - test_cenario_1_tempo_medio_geral
+      - test_cenario_1_taxa_atraso_geral
+  - id: RF-02
+    descricao: Calcular as mesmas metricas por prioridade, com as 3 chaves sempre presentes
+    testes:
+      - test_cenario_1_metricas_prioridade_alta
+      - test_cenario_1_prioridades_sem_concluidas_zeradas
+  - id: RF-03
+    descricao: Manter a assinatura da Fase 1 com resultado identico
+    testes:
+      - test_cenario_1_fachada_fase_1_equivalente
+
+regras_de_negocio:
+  - id: RN-01
+    descricao: Somente tarefas CONCLUIDA com data_conclusao entram nas medias e taxas
+    testes:
+      - test_borda_apenas_pendentes_retorna_zeros
+      - test_borda_canceladas_sao_ignoradas
+      - test_borda_concluida_sem_data_conclusao_e_ignorada
+  - id: RN-02
+    descricao: Conclusao anterior a criacao interrompe com TaskValidationError e log ERROR
+    mensagem: "Data de conclusão não pode ser anterior à data de criação da tarefa."
+    testes:
+      - test_cenario_2_dispara_task_validation_error
+      - test_cenario_2_erro_e_um_value_error
+      - test_cenario_2_registra_log_de_erro
+      - test_cenario_2_interrompe_mesmo_com_tarefas_validas
+      - test_cenario_2_valida_datas_de_qualquer_status
+  - id: RN-03
+    descricao: Sem tarefas concluidas, retornar metricas zeradas e log WARNING, sem excecao
+    testes:
+      - test_borda_lista_vazia_retorna_zeros_e_warning
+  - id: RN-04
+    descricao: Registros que violem o contrato de entrada geram TaskValidationError
+    testes:
+      - test_contrato_entrada_invalida
+      - test_contrato_campo_ausente
+      - test_contrato_id_duplicado
+      - test_contrato_estrutura_de_entrada_invalida
+  - id: RN-05
+    descricao: Esclarecimentos da v1.1 (fuso UTC, prazo exato, duracao zero, 2 casas)
+    testes:
+      - test_borda_conclusao_igual_a_criacao_e_permitida
+      - test_borda_conclusao_exatamente_no_prazo_nao_e_atraso
+      - test_borda_arredondamento_em_duas_casas
+      - test_borda_aceita_datetime_e_iso_com_z
+
+requisitos_nao_funcionais:
+  - id: RNF-01
+    descricao: Python 3.11 ou superior
+    verificacao: CI em ubuntu-latest com Python 3.11 e imagem python:3.11-slim
+  - id: RNF-02
+    descricao: Somente biblioteca padrao no codigo; pytest e a unica dependencia
+    verificacao: requirements.txt e revisao do diff no Pull Request
+  - id: RNF-03
+    descricao: Processamento estritamente em memoria, sem persistencia
+    verificacao: revisao do codigo; container sem volumes
+  - id: RNF-04
+    descricao: Logs estruturados (INFO, WARNING, ERROR) no formato evento=nome chave=valor
+    verificacao: test_cenario_2_registra_log_de_erro e test_borda_lista_vazia_retorna_zeros_e_warning
+  - id: RNF-05
+    descricao: Type hints, PEP 8 e Google Style Docstrings
+    verificacao: revisao humana no Pull Request
+
+requisitos_de_infraestrutura:
+  - id: RI-01
+    descricao: Pipeline de CI em push e Pull Request nas branches main e develop
+    arquivo: .github/workflows/ci.yml
+  - id: RI-02
+    descricao: Execucao do Test Harness em container isolado python:3.11-slim
+    arquivos: [Dockerfile, docker-compose.yml]
+    comando: docker compose run --rm tests
+
+criterio_de_aceite_global: 100% dos testes de tests/test_harness.py aprovados no CI e no container
