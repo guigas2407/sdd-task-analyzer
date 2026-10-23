@@ -52,7 +52,19 @@
 | `TaskValidationError` | exceção | Subclasse de `ValueError` |
 | `TaskAnalyzer.calcular_metricas(tarefas)` | método estático | Mantido da Fase 1; delega para `analyze_tasks` |
 
-## 4. Regras de interação com a IA
+## 4. Infraestrutura e pipeline (Fase 3)
+
+1. A IA pode criar ou alterar apenas `.github/workflows/ci.yml`,
+   `Dockerfile`, `docker-compose.yml` e `.dockerignore`, conforme a seção 7
+   da especificação.
+2. Proibido enfraquecer o pipeline: nada de `continue-on-error`, `|| true`,
+   `-k`/`--deselect`, `skip` ou `xfail` para fazer o build ficar verde.
+3. A imagem deve partir de `python:3.11-slim` e rodar com usuário sem
+   privilégios de administrador.
+4. Proibido incluir segredos, tokens ou credenciais em qualquer arquivo do
+   repositório ou do pipeline.
+
+## 5. Regras de interação com a IA
 
 - Prefixar todo prompt com este arquivo na íntegra.
 - Os testes de `tests/test_harness.py` são aprovados pelo desenvolvedor e,
